@@ -1,10 +1,12 @@
 
-
 import struct
 import serial
 import xdata
 from time import sleep
+import os   #Check if we are windows or linux
 
+
+import binascii
 
 
 def ahrs_highrate():       
@@ -50,39 +52,47 @@ def ahrs_lowrate():
 
 def hxr_serial():
 
-  index = 0
+    index = 0
+ 
+    #set up serial
+    if os.name == 'nt':
+        ahrs_serial = serial.Serial('COM39', 115200)     
+    
+    else:
+        ahrs_serial = serial.Serial('/dev/ttyS10', 115200)
 
-#set up serial
-  ahrs_serial = serial.Serial('/dev/ttyS10', 115200)
-  #ahrs_serial2 = serial.Serial('/dev/ttyS14', 115200)
-  print(ahrs_serial.name)
-
-  
+    ahrs_serial.write_timeout = 0
+    #ahrs_serial2 = serial.Serial('/dev/ttyS14', 115200)
+    print('AHRS Output to {}'.format(ahrs_serial.name))
 
   
 
 #get xplane data
-  while True:
+    while True:
     
-    ahrs_1 = ahrs_highrate()
+        ahrs_1 = ahrs_highrate()
     
-    if index < 15:
-        #print(ahrs_1.hex())
-        ahrs_serial.write(ahrs_1)
-        #ahrs_serial2.write(ahrs_1)
-        index += 1
-        sleep(0.05)
+        if index < 15:
+            #print('AHRS_1: {}'.format(binascii.hexlify(ahrs_1)))
+            ahrs_serial.write(ahrs_1)
+            #ahrs_serial2.write(ahrs_1)
+            index += 1
+            sleep(0.05)
         
 
-    else:
-        ahrs_2 = ahrs_lowrate()
-        #print (ahrs_2.hex())
-        ahrs_serial.write(ahrs_1)
-        ahrs_serial.write(ahrs_2)
-        #ahrs_serial2.write(ahrs_1)
-        #ahrs_serial2.write(ahrs_2)
-        index = 0
-        sleep(0.05)
+        else:
+            ahrs_2 = ahrs_lowrate()
+            #print('{} AHRS_2: {}'.format(time.asctime(), binascii.hexlify(ahrs_2)))
+            ahrs_serial.write(ahrs_1)
+            ahrs_serial.write(ahrs_2)
+            #ahrs_serial2.write(ahrs_1)
+            #ahrs_serial2.write(ahrs_2)
+            index = 0
+            sleep(0.05)
+
+
+
+
 
 if __name__ == "__main__":
     hxr_serial()

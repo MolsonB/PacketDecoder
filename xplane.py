@@ -29,7 +29,8 @@ datarefs = [
     ("sim/time/hobbs_time"), #seconds
     ("sim/time/total_flight_time_sec"),
     ("sim/flightmodel/engine/ENGN_bat_volt[0]"),
-    ("sim/cockpit2/fuel/fuel_quantity[0]"), #kgs
+    ("sim/cockpit2/fuel/fuel_level_indicated_left"),     #in lbs
+    ("sim/cockpit2/fuel/fuel_level_indicated_right"),     #in lbs
     ("sim/flightmodel/position/magnetic_variation")
    
 
@@ -39,7 +40,7 @@ datarefs = [
   ]
 
 
-print('Starting UDP connection with Xplane on port ', UDP_PORT)
+print('Starting UDP connection with Xplane on portq', UDP_PORT)
 sock = socket.socket(socket.AF_INET, # Internet
                      socket.SOCK_DGRAM) # UDP
 
@@ -95,6 +96,15 @@ def DecodePacket(data):
        #print("Unknown packet: ", data)
   
   return retvalues
+
+
+# Set a DataRef to a value: DREF
+def send_data(ref, val):
+    cmd = b'DREF\x00'
+    message = struct.pack('<5sf500s', cmd, float(val), ref.encode('utf-8'))
+    assert(len(message)==509)
+    sock.sendto(message, (UDP_IP, UDP_PORT))
+
 
 def xplane():
   rposdata = 0
@@ -166,8 +176,10 @@ def xplane():
         if (key==15):
             xdata.volts=val   
         if (key==16):
-            xdata.fuelqty=val
+            xdata.fuel_qty_left=val
         if (key==17):
+            xdata.fuel_qty_right=val
+        if (key==18):
             xdata.magvar=val
             
         
